@@ -479,14 +479,15 @@ func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser,
 	req.Method = method
 	req.Header = http.Header{}
 
-	bodyData, err := ioutil.ReadAll(body)
-	body.Close()
-	if err != nil {
-		return nil, errors.New("Could not determine length of body: " + err.Error())
+	if body != nil {
+		bodyData, err := ioutil.ReadAll(body)
+		body.Close()
+		if err != nil {
+			return nil, errors.New("Could not determine length of body: " + err.Error())
+		}
+		req.ContentLength = int64(len(bodyData))
+		req.Body = newByteReadCloser(bodyData)
 	}
-
-	req.ContentLength = int64(len(bodyData))
-	req.Body = newByteReadCloser(bodyData)
 
 	parsedurl, err := url.Parse(urlStr)
 	if err != nil {
