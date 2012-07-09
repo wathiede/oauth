@@ -256,18 +256,18 @@ func (c *Consumer) AuthorizeToken(rtoken *RequestToken, verificationCode string)
 // - err:
 //   Set only if there was an error, nil otherwise.
 func (c *Consumer) Get(url string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
-	return c.makeAuthorizedRequest("GET", url, "", userParams, token)
+	return c.makeAuthorizedRequest("GET", url, nil, userParams, token)
 }
 
-func (c *Consumer) Post(url string, body string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
+func (c *Consumer) Post(url string, body io.ReadCloser, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
 	return c.makeAuthorizedRequest("POST", url, body, userParams, token)
 }
 
 func (c *Consumer) Delete(url string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
-	return c.makeAuthorizedRequest("DELETE", url, "", userParams, token)
+	return c.makeAuthorizedRequest("DELETE", url, nil, userParams, token)
 }
 
-func (c *Consumer) Put(url string, body string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
+func (c *Consumer) Put(url string, body io.ReadCloser, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
 	return c.makeAuthorizedRequest("PUT", url, body, userParams, token)
 }
 
@@ -287,7 +287,7 @@ func (p pairs) Len() int           { return len(p) }
 func (p pairs) Less(i, j int) bool { return p[i].key < p[j].key }
 func (p pairs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-func (c *Consumer) makeAuthorizedRequest(method string, url string, body string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
+func (c *Consumer) makeAuthorizedRequest(method string, url string, body io.ReadCloser, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
 	allParams := c.baseParams(c.consumerKey, c.AdditionalParams)
 	allParams.Add(TOKEN_PARAM, token.Token)
 	authParams := allParams.Clone()
@@ -453,7 +453,7 @@ func (c *Consumer) requestString(method string, url string, params *OrderedParam
 }
 
 func (c *Consumer) getBody(url string, oauthParams *OrderedParams) (*string, error) {
-	resp, err := c.httpExecute("GET", url, "", oauthParams)
+	resp, err := c.httpExecute("GET", url, nil, oauthParams)
 	if err != nil {
 		return nil, errors.New("httpExecute: " + err.Error())
 	}
@@ -470,9 +470,7 @@ func (c *Consumer) getBody(url string, oauthParams *OrderedParams) (*string, err
 	return &bodyStr, nil
 }
 
-func (c *Consumer) httpExecute(
-	method string, urlStr string, body string, oauthParams *OrderedParams) (*http.Response, error) {
-
+func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser, oauthParams *OrderedParams) (*http.Response, error) {
 	if c.debug {
 		fmt.Println("httpExecute(method: " + method + ", url: " + urlStr)
 	}
@@ -480,8 +478,8 @@ func (c *Consumer) httpExecute(
 	var req http.Request
 	req.Method = method
 	req.Header = http.Header{}
-	req.Body = newStringReadCloser(body)
-	req.ContentLength = int64(len(body))
+	req.Body = body
+	//req.ContentLength = int64(len(body))
 	parsedurl, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, errors.New("ParseUrl: " + err.Error())
@@ -500,8 +498,6 @@ func (c *Consumer) httpExecute(
 	}
 	req.Header.Add("Authorization", oauthHdr)
 
-	fmt.Println(req)
-
 	resp, err := c.HttpClient.Do(&req)
 
 	if err != nil {
@@ -514,17 +510,6 @@ func (c *Consumer) httpExecute(
 			debugHeader += "[key: " + k + ", val: " + val + "]"
 		}
 	}
-
-	// if resp.StatusCode != http.StatusOK {
-	// 	bytes, _ := ioutil.ReadAll(resp.Body)
-	// 	resp.Body.Close()
-
-	// 	return nil, errors.New("HTTP response is not 200/OK as expected. Actual response: \n" +
-	// 		"\tResponse Status: '" + resp.Status + "'\n" +
-	// 		"\tResponse Code: " + strconv.Itoa(resp.StatusCode) + "\n" +
-	// 		"\tResponse Body: " + string(bytes) + "\n" +
-	// 		"\tRequst Headers: " + debugHeader)
-	// }
 	return resp, err
 }
 
