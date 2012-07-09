@@ -500,7 +500,7 @@ func (c *Consumer) httpExecute(
 	}
 	req.Header.Add("Authorization", oauthHdr)
 
-	log.Print(req)
+	fmt.Println(req)
 
 	resp, err := c.HttpClient.Do(&req)
 
