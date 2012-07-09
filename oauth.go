@@ -34,6 +34,7 @@
 package oauth
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
@@ -477,8 +478,16 @@ func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser,
 	var req http.Request
 	req.Method = method
 	req.Header = http.Header{}
-	req.Body = body
-	req.ContentLength = -1
+
+	bodyData, err := ioutil.ReadAll(body)
+	body.Close()
+	if err != nil {
+		return nil, errors.New("Could not determine length of body: " + err.Error())
+	}
+
+	req.ContentLength = int64(len(bodyData))
+	req.Body = newByteReadCloser(bodyData)
+
 	parsedurl, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, errors.New("ParseUrl: " + err.Error())
@@ -502,6 +511,18 @@ func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser,
 		return nil, errors.New("Do: " + err.Error())
 	}
 	return resp, nil
+}
+
+type byteReadCloser struct {
+	io.Reader
+}
+
+func newByteReadCloser(data []byte) io.ReadCloser {
+	return byteReadCloser{bytes.NewBuffer(data)}
+}
+
+func (rc byteReadCloser) Close() error {
+	return nil
 }
 
 //
