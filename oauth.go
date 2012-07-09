@@ -481,7 +481,7 @@ func (c *Consumer) httpExecute(
 	req.Method = method
 	req.Header = http.Header{}
 	req.Body = newStringReadCloser(body)
-	req.ContentLength = len(body)
+	req.ContentLength = int64(len(body))
 	parsedurl, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, errors.New("ParseUrl: " + err.Error())
