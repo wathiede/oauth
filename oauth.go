@@ -256,19 +256,19 @@ func (c *Consumer) AuthorizeToken(rtoken *RequestToken, verificationCode string)
 // - err:
 //   Set only if there was an error, nil otherwise.
 func (c *Consumer) Get(url string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
-	return c.makeAuthorizedRequest("GET", url, nil, userParams, token)
+	return c.makeAuthorizedRequest("GET", url, nil, "", userParams, token)
 }
 
-func (c *Consumer) Post(url string, body io.ReadCloser, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
-	return c.makeAuthorizedRequest("POST", url, body, userParams, token)
+func (c *Consumer) Post(url string, body io.ReadCloser, contentType string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
+	return c.makeAuthorizedRequest("POST", url, body, contentType, userParams, token)
 }
 
 func (c *Consumer) Delete(url string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
-	return c.makeAuthorizedRequest("DELETE", url, nil, userParams, token)
+	return c.makeAuthorizedRequest("DELETE", url, nil, "", userParams, token)
 }
 
-func (c *Consumer) Put(url string, body io.ReadCloser, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
-	return c.makeAuthorizedRequest("PUT", url, body, userParams, token)
+func (c *Consumer) Put(url string, body io.ReadCloser, contentType string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
+	return c.makeAuthorizedRequest("PUT", url, body, contentType, userParams, token)
 }
 
 func (c *Consumer) Debug(enabled bool) {
@@ -287,7 +287,7 @@ func (p pairs) Len() int           { return len(p) }
 func (p pairs) Less(i, j int) bool { return p[i].key < p[j].key }
 func (p pairs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-func (c *Consumer) makeAuthorizedRequest(method string, url string, body io.ReadCloser, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
+func (c *Consumer) makeAuthorizedRequest(method string, url string, body io.ReadCloser, contentType string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
 	allParams := c.baseParams(c.consumerKey, c.AdditionalParams)
 	allParams.Add(TOKEN_PARAM, token.Token)
 	authParams := allParams.Clone()
@@ -316,7 +316,7 @@ func (c *Consumer) makeAuthorizedRequest(method string, url string, body io.Read
 	base_string := c.requestString(method, url, allParams)
 	authParams.Add(SIGNATURE_PARAM, c.signer.Sign(base_string, key))
 
-	return c.httpExecute(method, url+queryParams, body, authParams)
+	return c.httpExecute(method, url+queryParams, body, contentType, authParams)
 }
 
 type request struct {
@@ -453,7 +453,7 @@ func (c *Consumer) requestString(method string, url string, params *OrderedParam
 }
 
 func (c *Consumer) getBody(url string, oauthParams *OrderedParams) (*string, error) {
-	resp, err := c.httpExecute("GET", url, nil, oauthParams)
+	resp, err := c.httpExecute("GET", url, nil, "", oauthParams)
 	if err != nil {
 		return nil, errors.New("httpExecute: " + err.Error())
 	}
@@ -470,7 +470,7 @@ func (c *Consumer) getBody(url string, oauthParams *OrderedParams) (*string, err
 	return &bodyStr, nil
 }
 
-func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser, oauthParams *OrderedParams) (*http.Response, error) {
+func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser, contentType string, oauthParams *OrderedParams) (*http.Response, error) {
 	if c.debug {
 		fmt.Println("httpExecute(method: " + method + ", url: " + urlStr)
 	}
@@ -478,6 +478,10 @@ func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser,
 	var req http.Request
 	req.Method = method
 	req.Header = http.Header{}
+
+	if contentType != "" {
+		req.Header.Add("Content-Type", contentType)
+	}
 
 	if body != nil {
 		bodyData, err := ioutil.ReadAll(body)
