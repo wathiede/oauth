@@ -499,30 +499,10 @@ func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser,
 	req.Header.Add("Authorization", oauthHdr)
 
 	resp, err := c.HttpClient.Do(&req)
-
 	if err != nil {
 		return nil, errors.New("Do: " + err.Error())
 	}
-
-	debugHeader := ""
-	for k, vals := range req.Header {
-		for _, val := range vals {
-			debugHeader += "[key: " + k + ", val: " + val + "]"
-		}
-	}
-	return resp, err
-}
-
-type stringReadCloser struct {
-	io.Reader
-}
-
-func newStringReadCloser(data string) io.ReadCloser {
-	return stringReadCloser{strings.NewReader(data)}
-}
-
-func (rc stringReadCloser) Close() error {
-	return nil
+	return resp, nil
 }
 
 //
