@@ -512,16 +512,16 @@ func (c *Consumer) httpExecute(
 		}
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		bytes, _ := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
+	// if resp.StatusCode != http.StatusOK {
+	// 	bytes, _ := ioutil.ReadAll(resp.Body)
+	// 	resp.Body.Close()
 
-		return nil, errors.New("HTTP response is not 200/OK as expected. Actual response: \n" +
-			"\tResponse Status: '" + resp.Status + "'\n" +
-			"\tResponse Code: " + strconv.Itoa(resp.StatusCode) + "\n" +
-			"\tResponse Body: " + string(bytes) + "\n" +
-			"\tRequst Headers: " + debugHeader)
-	}
+	// 	return nil, errors.New("HTTP response is not 200/OK as expected. Actual response: \n" +
+	// 		"\tResponse Status: '" + resp.Status + "'\n" +
+	// 		"\tResponse Code: " + strconv.Itoa(resp.StatusCode) + "\n" +
+	// 		"\tResponse Body: " + string(bytes) + "\n" +
+	// 		"\tRequst Headers: " + debugHeader)
+	// }
 	return resp, err
 }
 
