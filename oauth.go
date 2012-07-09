@@ -277,15 +277,15 @@ func (c *Consumer) Debug(enabled bool) {
 }
 
 type pair struct {
-	key string
+	key   string
 	value string
 }
 
 type pairs []pair
 
-func (p pairs) Len() int { return len(p) }
+func (p pairs) Len() int           { return len(p) }
 func (p pairs) Less(i, j int) bool { return p[i].key < p[j].key }
-func (p pairs) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+func (p pairs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func (c *Consumer) makeAuthorizedRequest(method string, url string, body string, userParams map[string]string, token *AccessToken) (resp *http.Response, err error) {
 	allParams := c.baseParams(c.consumerKey, c.AdditionalParams)
@@ -481,6 +481,7 @@ func (c *Consumer) httpExecute(
 	req.Method = method
 	req.Header = http.Header{}
 	req.Body = newStringReadCloser(body)
+	req.ContentLength = len(body)
 	parsedurl, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, errors.New("ParseUrl: " + err.Error())
