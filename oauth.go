@@ -45,6 +45,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 	"time"
@@ -506,6 +507,8 @@ func (c *Consumer) httpExecute(method string, urlStr string, body io.ReadCloser,
 		fmt.Println("AUTH-HDR: " + oauthHdr)
 	}
 	req.Header.Add("Authorization", oauthHdr)
+
+	req.Write(os.Stderr)
 
 	resp, err := c.HttpClient.Do(&req)
 	if err != nil {
